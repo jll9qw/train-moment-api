@@ -31,41 +31,117 @@ $(document).ready(function() {
     trainFreq = $("#frequency-input")
       .val()
       .trim();
-    // Code for the push
+
     dataRef.ref().push({
       trainName: trainName,
       destination: destination,
       trainTime: trainTime,
       trainFreq: trainFreq,
       dateAdded: firebase.database.ServerValue.TIMESTAMP
+
+     
     });
 
+    resetFields();
+});
+
+    function resetFields() {
+        $("#train-name-input").val("");
+        $("#destination-input").val("");
+        $("#first-time-input").val("");
+        $("#frequency-input").val("");
+      }
+
+
+
+      function calculateTimes(trainFreq, trainTime) {
+        var tfreq = trainFreq;
+
+        var firstTime = trainTime;
+
+        var firstTimeConverted = moment(firstTime, "H HH").subtract(
+          1,
+          "years"
+        );
+        console.log(firstTimeConverted);
+
+        var currentTime = moment();
+        console.log("Current Time: " + moment(currentTime).format("H HH"));
+
+        var diffTime = moment().diff(moment(firstTimeConverted), "m mm");
+        console.log("DIFFERENCE IN TIME: " + diffTime);
+
+ 
+        var tRemainder = diffTime % tfreq;
+        console.log(tRemainder);
+
+   
+        var tMinutesTillTrain = tfreq - tRemainder;
+        console.log("MINUTES TILL TRAIN: " + tMinutesTillTrain);
+ 
+
+        var nextTrain = moment().add(tMinutesTillTrain, "m mm");
+        console.log("ARRIVAL TIME: " + moment(nextTrain).format("H HH"));
+
+        return {
+          arrival: moment(nextTrain).format("H HH"),
+          minutesAway: tMinutesTillTrain
+        };
+
+        // if (firstTime > currentTime) {
+        //     nextTrain = firstTime;
+        //   } else {
+        //     // Otherwise, get minutes past first time
+        //     var minutesPast = currentTime.diff(firstTime, 'minutes');
+        //     // Find the result of minutesPast % frequency
+        //     var remainder = minutesPast % frequency;
+        //     // Subtract the remainder from the frequency
+        //     var minutesTilNextTrain = frequency - remainder;
+        //     // Set nextTrain to the currentTime + `minutesTilNextTrain` minutes
+        //     nextTrain = currentTime.add(minutesTilNextTrain, 'minutes');
+        //   }
+      
+      
+      }
+
+      dataRef.ref().on(
+        "child_added",
+        function(snapshot) {
+          console.log(snapshot.val().name);
+          console.log(snapshot.val().destination);
+          console.log(snapshot.val().frequency);
+
+          var times = calculateTimes(
+            snapshot.val().frequency,
+            snapshot.val().time
+          );
+
+          // Output to HTML
+          $("#results-table").append(
+            "<tr><td> " +
+              snapshot.val().trainName +
+              " </td><td> " +
+              snapshot.val().destination +
+              " </td><td> " +
+              snapshot.val().trainTime +
+              " </td><td> " +
+              snapshot.val().trainFreq +
+              " </td><td> " +
+              times.arrival +
+              "</td><td>  " +
+              times.minutesAway +
+              "</td></tr>"
+          );
+
+        },
+
+
+          // Handle the errors
+        function(errorObject) {
+          console.log("Errors handled: " + errorObject.code);
+        }
+)});
+
+
+
     
-// // Assumptions
-// var frequency = 3;
-
-// // First train of the day is at 3:30 AM
-// var firstTime = moment("03:30", 'HH:mm');
-
-// // Get the current time
-// var currentTime = moment();
-
-// // Create a variable to store the next train time
-// var nextTrain;
-
-// // If the first time is in the future, set next train to then
-// if (firstTime > currentTime) {
-//   nextTrain = firstTime;
-// } else {
-//   // Otherwise, get minutes past first time
-//   var minutesPast = currentTime.diff(firstTime, 'minutes');
-//   // Find the result of minutesPast % frequency
-//   var remainder = minutesPast % frequency;
-//   // Subtract the remainder from the frequency
-//   var minutesTilNextTrain = frequency - remainder;
-//   // Set nextTrain to the currentTime + `minutesTilNextTrain` minutes
-//   nextTrain = currentTime.add(minutesTilNextTrain, 'minutes');
-// }
-
-// // Print and format the new train time
-// console.log('Next Train Arrival Time:', nextTrain.format('hh:mm A')});
